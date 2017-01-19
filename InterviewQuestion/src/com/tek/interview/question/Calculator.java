@@ -5,9 +5,11 @@ import java.math.RoundingMode;
 import java.util.Map;
 
 public class Calculator {
+	
+	private static String IMPORTED = "imported";
 
-	public static double rounding(double value) {
-		return ((int) (value * 100)) / 100;
+	public static double rounding(double value, RoundingMode roundingMode) {
+		return new BigDecimal(value).setScale(2, roundingMode).doubleValue();
 	}
 
 	/*
@@ -21,55 +23,51 @@ public class Calculator {
 	public void calculate(Map<String, Order> o) {
 
 		double grandTotal = 0;
-		RoundingMode roundingMode = RoundingMode.HALF_EVEN;
-		BigDecimal bd;
 		// Iterate through the orders
-		for (Map.Entry<String, Order> entry : o.entrySet()) {
-			System.out.println("*******" + entry.getKey() + "*******");
-			Order r = entry.getValue();
-			double totalTax = 0;
-			double total = 0;
-			// Iterate through the items in the order
-			for (int i = 0; i < r.size(); i++) {
-
-				// Calculate the taxes
-				double tax = 0;
-				if (r.get(i).getItem().getDescription().toLowerCase()
-						.contains("imported".toLowerCase())) {
-					tax = r.get(i).getItem().getPrice() * 0.15; // Extra 5% tax
-																// on imported
-																// items
-				} else {
-					tax = r.get(i).getItem().getPrice() * 0.10;
+		if(o != null && !o.isEmpty()){
+			for (Map.Entry<String, Order> entry : o.entrySet()) {
+				System.out.println("*******" + entry.getKey() + "*******");
+				Order r = entry.getValue();
+				double totalTax = 0;
+				double total = 0;
+				if(r != null){
+					// Iterate through the items in the order
+					for (int i = 0; i < r.size(); i++) {
+		
+						// Calculate the taxes
+						double tax = 0;
+						Item item = r.get(i).getItem();
+						if (item.getDescription() != null && !item.getDescription().isEmpty() && item.getDescription().toLowerCase()
+								.contains(IMPORTED.toLowerCase())) {
+							tax = rounding(item.getPrice() * 0.15, RoundingMode.HALF_EVEN); // Extra 5% tax
+																		// on imported
+																		// items
+						} else {
+							tax = rounding(item.getPrice() * 0.10, RoundingMode.HALF_EVEN);
+						}
+						
+						// Calculate the total price
+						double totalPrice = rounding(item.getPrice() + tax, RoundingMode.HALF_EVEN);
+						// Print out the item's total price
+						System.out.println(r.get(i).getQuantity() + " "
+								+ item.getDescription() + ": "
+								+ totalPrice);
+		
+						// Keep a running total
+						totalTax += tax;
+						total += item.getPrice();
+		
+					}
 				}
-
-				// Calculate the total price
-				bd = new BigDecimal(tax).setScale(2, roundingMode);
-				tax = bd.doubleValue();
-				double totalPrice = r.get(i).getItem().getPrice() + tax;
-				bd = new BigDecimal(totalPrice).setScale(2, roundingMode);
-				totalPrice = bd.doubleValue();
-				// Print out the item's total price
-				System.out.println(r.get(i).getQuantity() + " "
-						+ r.get(i).getItem().getDescription() + ": "
-						+ totalPrice);
-
-				// Keep a running total
-				totalTax += tax;
-				total += r.get(i).getItem().getPrice();
-
+				// Print out the total taxes
+				System.out.println("Sales Tax: " + rounding(totalTax, RoundingMode.HALF_EVEN));
+	
+				total = rounding(total, RoundingMode.UP);
+				// Print out the total amount
+				System.out.println("Total: " + total);
+	
+				grandTotal += total;
 			}
-			bd = new BigDecimal(totalTax).setScale(2, roundingMode);
-			// Print out the total taxes
-			System.out.println("Sales Tax: " + bd.doubleValue());
-
-			// total = total + totalTax;
-			bd = new BigDecimal(total).setScale(2, RoundingMode.UP);
-			total = bd.doubleValue();
-			// Print out the total amount
-			System.out.println("Total: " + total);
-
-			grandTotal += total;
 		}
 		System.out.println("Sum of orders: " + Math.floor(grandTotal * 100)
 				/ 100);

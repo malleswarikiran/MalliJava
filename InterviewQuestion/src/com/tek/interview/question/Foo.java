@@ -14,6 +14,9 @@ public class Foo {
 		c.add(new OrderLine(new Item("music CD", (float) 14.99), 1));
 		c.add(new OrderLine(new Item("chocolate bar", (float) 0.85), 1));
 		o.put("Order 1", c);
+		
+		
+		
 
 		// Reuse cart for an other order
 		c = new Order();
